@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Карта головнокомандувача</title>
+  <link href="https://cdn.maptiler.com/maptiler-sdk-js/v1.1.1/maptiler-sdk.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="toolbox">
+    <button onclick="selectTool('tank')" title="Танк"><img src="icons/tank.png" alt="Танк"></button>
+    <button onclick="selectTool('drone')" title="БТР"><img src="icons/drone.png" alt="Дрон"></button>
+    <button onclick="selectTool('bmp')" title="БМП"><img src="icons/bmp.png" alt="Дрон"></button>
+  </div>
+
+  <div id="map"></div>
+
+  <div id="contextMenu" class="context-menu">
+    <ul>
+      <li id="editMarker">✏️ Редагувати</li>
+      <li id="markDestroyed">💥 Помітити як знищений</li>
+      <li id="deleteMarker">🗑️ Видалити</li>
+    </ul>
+  </div>
+
+
+  <script src="https://cdn.maptiler.com/maptiler-sdk-js/v1.1.1/maptiler-sdk.umd.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
