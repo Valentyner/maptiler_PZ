@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
   <meta charset="UTF-8">
   <title>Карта головнокомандувача</title>
   <link href="https://cdn.maptiler.com/maptiler-sdk-js/v1.1.1/maptiler-sdk.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet" />
 </head>
+
 <body>
   <div id="toolbox">
     <button onclick="selectTool('tank')" title="Танк"><img src="icons/tank.png" alt="Танк"></button>
@@ -24,8 +27,57 @@
     </ul>
   </div>
 
+  <button id="toggleFormBtn" class="btn btn-secondary position-absolute m-1" style="top: 0; left: 0; z-index: 1050;">
+    🛩️ Дані польоту
+  </button>
 
-  <script src="https://cdn.maptiler.com/maptiler-sdk-js/v1.1.1/maptiler-sdk.umd.js"></script>
-  <script src="script.js"></script>
+  <form id="flightForm" class="p-3 bg-light border rounded shadow-sm "
+    style="position: absolute; max-width: 400px; display: none; margin-left: 65px; margin-top: 55px">
+    <div class="mb-3">
+      <label for="otuv" class="form-label">ОТУВ:</label>
+      <select class="form-select" name="otuv" id="otuv" required>
+        <option value="">Оберіть</option>
+        <option value="Схід">Схід</option>
+        <option value="Південь">Південь</option>
+        <option value="Північ">Північ</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="direction" class="form-label">Напрямок:</label>
+      <input type="text" class="form-control" name="direction" id="direction" required
+        placeholder="Наприклад: Бахмут-Північ">
+    </div>
+
+    <div class="mb-3">
+      <label for="videoInput" class="form-label">Відео БпЛА:</label>
+      <input type="file" class="form-control" id="videoInput" accept="video/*" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Завантажити (мок)</button>
+  </form>
+
+  <button id="showListBtn" class="btn btn-outline-secondary position-absolute"
+    style="z-index: 1050; margin-left: 160px; margin-top: 5px;">📂 Переглянути всі напрямки</button>
+
+  <!-- Блок зі списком напрямків та файлів -->
+  <div id="fileList" class="bg-white border rounded shadow position-absolute"
+    style="display: none; max-width: 500px; display: none; margin-left: 65px; margin-top: 55px">
+    <h5>📋 Список завантажених файлів</h5>
+    <ul id="fileListItems" class="list-group"></ul>
+  </div>
+
+  <div id="videoFrame" class="position-absolute"
+    style="bottom: 0; right: 0; width: 400px; z-index: 1050;">
+    <button type="button" class="btn btn-danger">Danger</button>
+    <img src="" class="width: 400px;" />
+  </div>
+
+  <div>
+    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v1.1.1/maptiler-sdk.umd.js"></script>
+    <script src="script.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="./bootstrap/js/bootstrap.min.js"></script>
 </body>
+
 </html>

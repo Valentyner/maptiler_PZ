@@ -3,12 +3,60 @@ const fs = require("fs");
 const path = require("path");
 const { PDFDocument, rgb } = require("pdf-lib");
 const { ChartJSNodeCanvas } = require("chartjs-node-canvas");
+const dotenv = require('dotenv');
+const multer = require("multer");
+
+dotenv.config();
 const app = express();
 const PORT = 3000;
 
+const uploadFolder = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadFolder)) {
+  fs.mkdirSync(uploadFolder);
+}
+
+// Налаштування multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadFolder);
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + '-' + file.originalname;
+    cb(null, uniqueName);
+  }
+});
+const upload = multer({ storage });
+
+
 app.use(express.static(path.join(__dirname, "public")));
+app.use('/uploads', express.static('uploads'));
 app.use(express.json());
 
+// Завантаження файла
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  const { otuv, direction } = req.body;
+  const file = req.file;
+
+  if (!file) return res.status(400).json({ error: 'No file uploaded' });
+
+  // Зберігаємо мета-дані у JSON або базі
+  const saved = {
+    otuv,
+    direction,
+    fileName: file.filename,
+    originalName: file.originalname
+  };
+
+  // Наприклад: додати в локальний файл (як лог)
+  const dbPath = path.join(__dirname, 'fileList.json');
+  const list = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
+  list.push(saved);
+  fs.writeFileSync(dbPath, JSON.stringify(list, null, 2));
+
+  res.json({ success: true, saved });
+});
+
+// Завантаження всіх маркерів
 app.get("/api/markers", (req, res) => {
   const filePath = path.join(__dirname, "markers.json");
   fs.readFile(filePath, "utf8", (err, data) => {
@@ -25,6 +73,20 @@ function getOTUV(lat, lng) {
 }
 const chartJSNodeCanvas = new ChartJSNodeCanvas({ width: 800, height: 600 });
 
+// Завантаження всіх маркерів
+app.get("/api/video", (req, res) => {
+  const filePath = path.join(__dirname, "fileList.json");
+  fs.readFile(filePath, "utf8", (err, data) => {
+    if (err) return res.status(500).json({ error: "Cannot read file" });
+    res.json(JSON.parse(data));
+  });
+});
+
+app.get("/api/apikey", (req, res) => {
+  res.json({ apiKey: process.env.MAPTILER_API_KEY});
+});
+
+// Додавання нового маркера
 app.post("/api/markers", (req, res) => {
   const newMarker = req.body;
   const filePath = path.join(__dirname, "markers.json");

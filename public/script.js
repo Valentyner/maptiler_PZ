@@ -3,17 +3,74 @@ let currentMarker = null;
 let currentTooltip = null;
 let currentPosition = null;
 
+// Cховище для файлів
+let uploadedFiles = [];
+
+let map = null;
+
 function selectTool(tool) {
   selectedTool = tool;
 }
 
-maptilersdk.config.apiKey = '1GE8kkRVIxwHhspELnK8';
+async function getApi() {
+  let response = await fetch('/api/apikey');
+  let data = await response.json();
+  return data.apiKey;
+}
 
-const map = new maptilersdk.Map({
-  container: 'map',
-  style: maptilersdk.MapStyle.BASIC,
-  center: [30.52, 50.45],
-  zoom: 6
+async function getListVideo() {
+  let response = await fetch('/api/video');
+  let data = await response.json();
+  return data;
+}
+
+async function init() {
+  const apiKey = await getApi();
+  console.log(apiKey);
+
+  maptilersdk.config.apiKey = apiKey;
+
+  map = new maptilersdk.Map({
+    container: 'map',
+    style: maptilersdk.MapStyle.BASIC,
+    center: [30.52, 50.45],
+    zoom: 6
+  });
+
+  map.on('click', async (e) => {
+    if (!selectedTool) return;
+
+    const date = prompt("Дата фіксації:", new Date().toISOString().slice(0, 10));
+    if (!date) return;
+    const time = prompt("Час фіксації:", new Date().toTimeString().slice(0, 5));
+    if (!time) return;
+
+    const markerData = {
+      type: selectedTool,
+      date,
+      time,
+      lat: e.lngLat.lat,
+      lng: e.lngLat.lng
+    };
+
+    addMarker(markerData);
+
+    fetch('/api/markers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(markerData)
+    });
+  });
+
+  uploadedFiles = await getListVideo();
+
+  fetch('/api/markers')
+    .then(res => res.json())
+    .then(data => data.forEach(marker => addMarker(marker)));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  init();
 });
 
 fetch('/api/markers')
@@ -45,6 +102,7 @@ map.on('click', async (e) => {
   });
 });
 
+// Завантажити маркери з сервера
 function addMarker(data) {
   const el = document.createElement('img');
   el.addEventListener('mousedown', (e) => {
@@ -76,23 +134,25 @@ function addMarker(data) {
   }).setLngLat([data.lng, data.lat]).addTo(map);
 
   el.addEventListener('contextmenu', (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  marker.setDraggable(false);
+    // 🚫 Тимчасово вимикаємо перетягування
+    marker.setDraggable(false);
 
-  currentMarker = marker;
-  currentTooltip = tooltip;
-  currentPosition = { lng: data.lng, lat: data.lat };
+    currentMarker = marker;
+    currentTooltip = tooltip;
+    currentPosition = { lng: data.lng, lat: data.lat };
 
-  const menu = document.getElementById('contextMenu');
-  menu.style.top = `${e.pageY}px`;
-  menu.style.left = `${e.pageX}px`;
-  menu.style.display = 'block';
+    const menu = document.getElementById('contextMenu');
+    menu.style.top = `${e.pageY}px`;
+    menu.style.left = `${e.pageX}px`;
+    menu.style.display = 'block';
 
-  el.addEventListener('mouseleave', () => {
-    marker.setDraggable(true);
-  }, { once: true });
-});
+    // ✅ Повертаємо drag після зняття курсора
+    el.addEventListener('mouseleave', () => {
+      marker.setDraggable(true);
+    }, { once: true });
+  });
 
 
   marker.on('dragend', () => {
@@ -170,7 +230,6 @@ document.getElementById('editMarker').addEventListener('click', () => {
   }, { once: true });
 });
 
-
 document.getElementById('deleteMarker').addEventListener('click', () => {
   if (currentMarker && currentPosition) {
     currentMarker.remove();
@@ -236,4 +295,90 @@ document.getElementById("generateReport").addEventListener("click", () => {
       a.remove();
     })
     .catch(err => alert("Помилка: " + err.message));
+});
+
+// Кнопки та елементи
+const toggleFormBtn = document.getElementById('toggleFormBtn');
+const flightForm = document.getElementById('flightForm');
+const showListBtn = document.getElementById('showListBtn');
+const fileList = document.getElementById('fileList');
+const fileListItems = document.getElementById('fileListItems');
+
+// Показ/приховування форми
+toggleFormBtn.addEventListener('click', () => {
+  flightForm.style.display = (flightForm.style.display === 'none') ? 'block' : 'none';
+});
+
+// Обробка завантаження файлу
+flightForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const otuv = document.getElementById('otuv').value;
+  const direction = document.getElementById('direction').value;
+  const file = document.getElementById('videoInput').files[0];
+
+  if (!otuv || !direction || !file) {
+    alert('Заповніть всі поля!');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('otuv', otuv);
+  formData.append('direction', direction);
+  formData.append('file', file);
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData
+  });
+
+  const result = await res.json();
+  if (result.success) {
+    alert(`✅ Завантажено: ${result.saved.fileName}`);
+    flightForm.reset();
+    flightForm.style.display = 'none';
+    uploadedFiles.push(result.saved)
+  } else {
+    alert('❌ Помилка завантаження');
+  }
+});
+
+async function setVideo(fileName) {
+  const frame = document.getElementById('videoFrame');
+  const img = frame.querySelector('img');
+
+  img.src = `/uploads/${fileName}`; // або повний шлях, якщо на хості
+  frame.style.display = 'block';
+}
+
+// Перегляд списку
+showListBtn.addEventListener('click', () => {
+  fileListItems.innerHTML = ''; // Очистити попередній список
+  console.log('uploadedFiles', uploadedFiles)
+  if (uploadedFiles.length === 0) {
+    fileListItems.innerHTML = `<li class="list-group-item text-muted">Немає файлів</li>`;
+  } else {
+    uploadedFiles.forEach(file => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.innerText = `📁 ${file.otuv} | ${file.direction} → ${file.fileName}`;
+
+      li.addEventListener('click', () => {
+        setVideo(file.fileName);
+      });
+
+      fileListItems.appendChild(li);
+    });
+  }
+
+  fileList.style.display = (fileList.style.display === 'none') ? 'block' : 'none';
+});
+
+// Закрити превʼю
+document.querySelector('#videoFrame .btn-danger').addEventListener('click', () => {
+  const frame = document.getElementById('videoFrame');
+  const img = frame.querySelector('img');
+
+  img.src = '';
+  frame.style.display = 'none';
 });
