@@ -16,7 +16,6 @@ const map = new maptilersdk.Map({
   zoom: 6
 });
 
-// Завантажити маркери з сервера
 fetch('/api/markers')
   .then(res => res.json())
   .then(data => data.forEach(marker => addMarker(marker)));
@@ -79,7 +78,6 @@ function addMarker(data) {
   el.addEventListener('contextmenu', (e) => {
   e.preventDefault();
 
-  // 🚫 Тимчасово вимикаємо перетягування
   marker.setDraggable(false);
 
   currentMarker = marker;
@@ -91,7 +89,6 @@ function addMarker(data) {
   menu.style.left = `${e.pageX}px`;
   menu.style.display = 'block';
 
-  // ✅ Повертаємо drag після зняття курсора
   el.addEventListener('mouseleave', () => {
     marker.setDraggable(true);
   }, { once: true });
@@ -132,7 +129,6 @@ function addMarker(data) {
   });
 }
 
-// Контекстне меню
 document.addEventListener('click', () => {
   document.getElementById('contextMenu').style.display = 'none';
 });
@@ -140,21 +136,17 @@ document.addEventListener('click', () => {
 document.getElementById('editMarker').addEventListener('click', () => {
   if (!currentMarker || !currentTooltip || !currentPosition) return;
 
-  // 🚫 Тимчасово вимикаємо перетягування
   currentMarker.setDraggable(false);
 
   const newDate = prompt("Нова дата:", new Date().toISOString().slice(0, 10));
   const newTime = prompt("Новий час:", new Date().toTimeString().slice(0, 5));
   if (!newDate || !newTime) return;
 
-  // 🧠 Отримати тип з картинки
   const img = currentMarker.getElement();
   const currentType = img.src.split('/').pop().split('.')[0];
 
-  // 📝 Оновити tooltip
   currentTooltip.innerText = `Тип: ${currentType.toUpperCase()}\nДата: ${newDate}\nЧас: ${newTime}`;
 
-  // 🔄 Оновити сервер
   fetch('/api/markers', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
@@ -173,7 +165,6 @@ document.getElementById('editMarker').addEventListener('click', () => {
     });
   });
 
-  // ✅ Увімкнути назад перетягування після миші
   img.addEventListener('mouseleave', () => {
     currentMarker.setDraggable(true);
   }, { once: true });
@@ -229,4 +220,20 @@ document.getElementById('markDestroyed').addEventListener('click', () => {
   });
 });
 
-
+document.getElementById("generateReport").addEventListener("click", () => {
+  fetch("/generate-pdf")
+    .then(res => {
+      if (!res.ok) throw new Error("Помилка створення звіту");
+      return res.blob();
+    })
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "otu_report.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    })
+    .catch(err => alert("Помилка: " + err.message));
+});

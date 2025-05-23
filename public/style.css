@@ -67,3 +67,8 @@ body, html {
 .context-menu ul li:hover {
   background-color: #eee;
 }
+
+#toolbox button#generateReport {
+  font-size: 24px;
+  padding: 5px;
+}
