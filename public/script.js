@@ -25,8 +25,7 @@ async function getListVideo() {
 }
 
 async function init() {
-  const apiKey = await getApi();
-  console.log(apiKey);
+  const apiKey = "1GE8kkRVIxwHhspELnK8"
 
   maptilersdk.config.apiKey = apiKey;
 
@@ -71,35 +70,6 @@ async function init() {
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
-});
-
-fetch('/api/markers')
-  .then(res => res.json())
-  .then(data => data.forEach(marker => addMarker(marker)));
-
-map.on('click', async (e) => {
-  if (!selectedTool) return;
-
-  const date = prompt("Дата фіксації:", new Date().toISOString().slice(0, 10));
-  if (!date) return;
-  const time = prompt("Час фіксації:", new Date().toTimeString().slice(0, 5));
-  if (!time) return;
-
-  const markerData = {
-    type: selectedTool,
-    date,
-    time,
-    lat: e.lngLat.lat,
-    lng: e.lngLat.lng
-  };
-
-  addMarker(markerData);
-
-  fetch('/api/markers', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(markerData)
-  });
 });
 
 // Завантажити маркери з сервера
@@ -354,7 +324,6 @@ async function setVideo(fileName) {
 // Перегляд списку
 showListBtn.addEventListener('click', () => {
   fileListItems.innerHTML = ''; // Очистити попередній список
-  console.log('uploadedFiles', uploadedFiles)
   if (uploadedFiles.length === 0) {
     fileListItems.innerHTML = `<li class="list-group-item text-muted">Немає файлів</li>`;
   } else {
