@@ -30,6 +30,7 @@ const upload = multer({ storage });
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use('/uploads', express.static('uploads'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // Завантаження файла
@@ -184,3 +185,4 @@ app.delete("/api/markers", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+

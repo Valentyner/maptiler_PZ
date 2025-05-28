@@ -67,17 +67,17 @@
     <ul id="fileListItems" class="list-group"></ul>
   </div>
 
-  <div id="videoFrame" class="position-absolute"
-    style="bottom: 0; right: 0; width: 400px; z-index: 1050;">
-    <button type="button" class="btn btn-danger">Danger</button>
-    <img src="" class="width: 400px;" />
+  <div id="videoFrame" class="position-absolute" style="bottom: 0; right: 0; max-width: 400px; z-index: 1050;">
+    <button type="button" class="btn btn-danger">X</button>
+    <img src="videoFrame" class="" style="bottom: 0; right: 0; width: 400px; z-index: 1050;" />
   </div>
 
-  <div>
-    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v1.1.1/maptiler-sdk.umd.js"></script>
-    <script src="script.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="./bootstrap/js/bootstrap.min.js"></script>
+  <input type="file" id="routeUpload" accept=".json" style="position:absolute;top:10px;left:40px;z-index:1;" />
+
+  <script src="https://cdn.maptiler.com/maptiler-sdk-js/v1.1.1/maptiler-sdk.umd.js"></script>
+  <script src="script.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="./bootstrap/js/bootstrap.min.js"></script>
 </body>
 
 </html>

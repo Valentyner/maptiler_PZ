@@ -25,8 +25,9 @@ async function getListVideo() {
 }
 
 async function init() {
-  const apiKey = "1GE8kkRVIxwHhspELnK8"
+  const MAP_TIMEOUT = 5000; // 5 секунд
 
+  const apiKey = await getApi()
   maptilersdk.config.apiKey = apiKey;
 
   map = new maptilersdk.Map({
@@ -34,6 +35,21 @@ async function init() {
     style: maptilersdk.MapStyle.BASIC,
     center: [30.52, 50.45],
     zoom: 6
+  });
+
+
+  const timeout = setTimeout(() => {
+    if (!map.isStyleLoaded()) {
+      console.error("⏰ Map style loading timeout");
+      alert("Мапа не завантажилась, спробуйте оновити сторінку.");
+      // Можна показати заглушку або перезавантажити
+    }
+  }, MAP_TIMEOUT);
+
+  map.on('load', () => {
+    clearTimeout(timeout);
+    console.log('✅ Map loaded successfully');
+    // Тут додавай шари, джерела
   });
 
   map.on('click', async (e) => {
@@ -66,6 +82,92 @@ async function init() {
   fetch('/api/markers')
     .then(res => res.json())
     .then(data => data.forEach(marker => addMarker(marker)));
+
+  map.on('load', function () {
+    document.getElementById('routeUpload').addEventListener('change', function (event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const geojson = JSON.parse(e.target.result);
+          if (map.getSource('bplaRoute')) {
+            map.removeLayer('bplaRoute');
+            map.removeSource('bplaRoute');
+          }
+
+          map.addSource('bplaRoute', {
+            type: 'geojson',
+            data: geojson
+          });
+
+          map.addLayer({
+            id: 'bplaRoute',
+            type: 'line',
+            source: 'bplaRoute',
+            layout: {
+              'line-cap': 'round',
+              'line-join': 'round'
+            },
+            paint: {
+              'line-color': '#ff8800',
+              'line-width': 4
+            }
+          });
+
+          const coordinates = geojson.geometry.coordinates;
+          if (coordinates.length > 0) {
+            map.flyTo({ center: coordinates[0], zoom: 14 });
+          }
+        } catch (err) {
+          alert("Invalid JSON file format");
+        }
+      };
+      reader.readAsText(file);
+    });
+  });
+
+  map.on('load', () => {
+    fetch('route.json') // шлях до JSON (має бути у public або доступний через express.static)
+      .then(response => {
+        if (!response.ok) throw new Error("Route file not found");
+        return response.json();
+      })
+      .then(geojson => {
+        map.addSource('bplaRoute', {
+          type: 'geojson',
+          data: geojson
+        });
+
+        map.addLayer({
+          id: 'bplaRoute',
+          type: 'line',
+          source: 'bplaRoute',
+          layout: {
+            'line-cap': 'round',
+            'line-join': 'round'
+          },
+          paint: {
+            'line-color': '#ff8800',
+            'line-width': 4
+          }
+        });
+
+        const coords = geojson.geometry.coordinates;
+        if (coords.length > 0) {
+          map.flyTo({ center: coords[0], zoom: 14 });
+        }
+      })
+      .catch(err => {
+        console.error("Cannot load route.json:", err.message);
+      });
+
+    map.on('click', 'bplaRoute', () => {
+      window.open('/bpla-viewer.html', '_blank'); // або відкрий модальне вікно
+      map.setPaintProperty('bplaRoute', 'line-color', '#00ff00');
+    });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
