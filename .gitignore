@@ -4,5 +4,5 @@ npm-debug.log
 .env
 .DS_Store
 uploads
-fileList.json
-markers.json
+.fileList.json
+.markers.json
